@@ -64,21 +64,6 @@ Then, just follow along! The first step describes the design of your application
 8. Create the [`nameserviced` and `nameservicecli` entry points](./entrypoint.md) to your application.
 9. Setup [dependency management using `dep`](./dep.md).
 
-### Tutorial parts
-
-1. [Design](./app-design.md) the application.
-2. Begin the implementation of your application in [`./app.go`](./app-init.md).
-2. Start building your module with the [`Keeper`](./keeper.md).
-3. Define state transitions through [`Msgs` and `Handlers`](./msgs-handlers.md).
-    * [`SetName`](./set-name.md)
-    * [`BuyName`](./buy-name.md)
-4. Make views on your state machine with [`Queriers`](./queriers.md).
-5. Register your types in the encoding format using [`sdk.Codec`](./codec.md).
-6. Create [CLI interactions for your module](./cli.md).
-7. Import your module and [finish building your application](./app-complete.md)!
-8. Create the [`nameserviced` and `nameservicecli` entry points](./entrypoint.md) to your application.
-9. Setup [dependency management using `dep`](./dep.md).
-
 ## Building the `nameservice` application
 
 If you want to build the `nameservice` application in this repo to see the functionalities, first you need to install `dep`.
@@ -110,14 +95,13 @@ To initialize configuration and a `genesis.json` file for your application and a
 # Copy the chain_id and app_message.secret output here and save it for later user
 nameserviced init
 
-# Use app_message.secret recover jack's account. 
+# Use app_message.secret recover jack's account.
 # Copy the `Address` output here and save it for later use
 nameservicecli keys add jack --recover
 
 # Create another account with random secret.
 # Copy the `Address` output here and save it for later use
 nameservicecli keys add tim
-
 ```
 
 Next open the generated file `~/.nameserviced/config/genesis.json` in a text editor and copy the address output from the `nameservicecli keys add` command in the `"address"` field under `"accounts"`. This will give you control over a wallet with some coins when you start your local network.
@@ -130,19 +114,19 @@ Open another terminal to run commands against the network you have just created:
 
 ```bash
 # First check the accounts to ensure they have funds
-nameservicecli query account $(nameservicecli keys list -o json | jq -r .[0].address) \
-    --indent --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id) 
-nameservicecli query account $(nameservicecli keys list -o json | jq -r .[1].address) \
-    --indent --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id) 
+nameservicecli query account $(nameservicecli keys show jack -o json | jq -r .address) \
+    --indent --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
+nameservicecli query account $(nameservicecli keys show tim -o json | jq -r .address) \
+    --indent --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
 
 # Buy your first name using your coins from the genesis file
 nameservicecli tx buy-name jack.id 5mycoin \
-    --from     $(nameservicecli keys list -o json | jq -r .[0].address) \
+    --from     $(nameservicecli keys show jack -o json | jq -r .address) \
     --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
 
 # Set the value for the name you just bought
 nameservicecli tx set-name jack.id 8.8.8.8 \
-    --from     $(nameservicecli keys list -o json | jq -r .[0].address) \
+    --from     $(nameservicecli keys show jack -o json | jq -r .address) \
     --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
 
 # Try out a resolve query against the name you registered
@@ -153,16 +137,16 @@ nameservicecli query resolve jack.id --chain-id $(cat ~/.nameserviced/config/gen
 nameservicecli query whois jack.id --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
 # > {"value":"8.8.8.8","owner":"cosmos1l7k5tdt2qam0zecxrx78yuw447ga54dsmtpk2s","price":[{"denom":"mycoin","amount":"5"}]}
 
-# Jack send some coin to tim, then tim can buy name from jack.  
+# Jack sends some coin to tim, so he can buy name from jack.  
 nameservicecli tx send \
-    --from     $(nameservicecli keys list -o json | jq -r .[0].address) \
-    --to       $(nameservicecli keys list -o json | jq -r .[1].address) \
+    --from     $(nameservicecli keys show jack -o json | jq -r .address) \
+    --to       $(nameservicecli keys show tim -o json | jq -r .address) \
     --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id) \
     --amount 1000mycoin
 
-# Tim buy name from jack
+# Tim buys name from jack
 nameservicecli tx buy-name jack.id 10mycoin \
-    --from     $(nameservicecli keys list -o json | jq -r .[0].address) \
+    --from     $(nameservicecli keys show tim -o json | jq -r .address) \
     --chain-id $(cat ~/.nameserviced/config/genesis.json | jq -r .chain_id)
 
 
